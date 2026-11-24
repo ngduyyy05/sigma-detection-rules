@@ -43,6 +43,12 @@ PASS sysmon_10_lsass_mimikatz_sekurlsa_logonpasswords.evtx: {'Process Requesting
 PASS LM_tsclient_startup_folder.evtx: {'File Created In User Startup Folder': 1}
 PASS CA_4624_4625_LogonType2_LogonProc_chrome.evtx: {}
 
+Chainsaw v2.18.0 replay repeated with the Linux release in WSL:
+PASS Network_Service_Guest_added_to_admins_4732.evtx: {'Member Added To Built-in Administrators': 2}
+PASS sysmon_10_lsass_mimikatz_sekurlsa_logonpasswords.evtx: {'Process Requesting Read Access to LSASS': 1}
+PASS LM_tsclient_startup_folder.evtx: {'File Created In User Startup Folder': 1}
+PASS CA_4624_4625_LogonType2_LogonProc_chrome.evtx: {}
+
 $ actionlint -color=false
 actionlint exit 0
 
