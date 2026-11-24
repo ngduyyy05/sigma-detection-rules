@@ -1,0 +1,53 @@
+Local verification | 2026-11-24 | Python 3.13 / Windows
+Dependency versions are pinned in requirements.txt. Commands use an activated venv.
+
+$ sigma check --fail-on-issues rules
+Parsing Sigma rules
+Checking Sigma rules
+
+=== Summary ===
+Found 0 errors, 0 condition errors and 0 issues.
+No rule errors found.
+No condition errors found.
+No validation issues found.
+
+$ sigma convert -t lucene -p ecs_windows -o output/elastic-lucene.txt rules
+Parsing Sigma rules
+$ Get-Content output/elastic-lucene.txt
+winlog.channel:Security AND (event.code:4732 AND winlog.event_data.TargetSid:S\-1\-5\-32\-544)
+
+winlog.channel:Microsoft\-Windows\-Sysmon\/Operational AND event.code:10 AND winlog.event_data.TargetImage:*\\lsass.exe AND (winlog.event_data.GrantedAccess:(0x1010 OR 0x1410 OR 0x1fffff))
+
+winlog.channel:Microsoft\-Windows\-Sysmon\/Operational AND event.code:1 AND (process.executable.caseless:(*\\powershell.exe OR *\\pwsh.exe)) AND (process.command_line:(*\ \-encodedcommand\ * OR *\ \-enc\ *))
+
+winlog.channel:Security AND (event.code:4625 AND winlog.event_data.LogonType:10)
+
+winlog.channel:Microsoft\-Windows\-Sysmon\/Operational AND event.code:11 AND file.path:*\\Microsoft\\Windows\\Start\ Menu\\Programs\\Startup\\*
+
+$ sigma convert -t splunk -p splunk_windows -o output/splunk-spl.txt rules
+Parsing Sigma rules
+$ Get-Content output/splunk-spl.txt
+source="WinEventLog:Security" EventCode=4732 TargetSid="S-1-5-32-544"
+
+Channel="Microsoft-Windows-Sysmon/Operational" EventCode=10 TargetImage="*\\lsass.exe" GrantedAccess IN ("0x1010", "0x1410", "0x1fffff")
+
+Channel="Microsoft-Windows-Sysmon/Operational" EventCode=1 Image IN ("*\\powershell.exe", "*\\pwsh.exe") CommandLine IN ("* -encodedcommand *", "* -enc *")
+
+source="WinEventLog:Security" EventCode=4625 LogonType=10
+
+Channel="Microsoft-Windows-Sysmon/Operational" EventCode=11 TargetFilename="*\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\*"
+
+$ python scripts/replay.py --chainsaw "$chainsaw" --mapping "$mapping"
+PASS Network_Service_Guest_added_to_admins_4732.evtx: {'Member Added To Built-in Administrators': 2}
+PASS sysmon_10_lsass_mimikatz_sekurlsa_logonpasswords.evtx: {'Process Requesting Read Access to LSASS': 1}
+PASS LM_tsclient_startup_folder.evtx: {'File Created In User Startup Folder': 1}
+PASS CA_4624_4625_LogonType2_LogonProc_chrome.evtx: {}
+
+$ actionlint -color=false
+actionlint exit 0
+
+$ gitleaks git --staged --no-banner --redact .
+9:45PM INF no leaks found
+
+Runtime coverage in deployed Elasticsearch and Splunk, positive PowerShell and
+RemoteInteractive logon fixtures, and hosted GitHub Actions — TODO(user): fill after running.
