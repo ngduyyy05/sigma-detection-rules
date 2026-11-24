@@ -1,0 +1,21 @@
+title: File Created In User Startup Folder
+id: f9bbfcf0-430f-417c-bb96-a09114307ed0
+status: experimental
+description: Flags file creation in the standard Windows user Startup folder.
+author: ngduyyy05
+date: 2026-11-24
+tags:
+    - attack.persistence
+    - attack.t1547.001
+logsource:
+    product: windows
+    category: file_event
+detection:
+    selection:
+        Channel: Microsoft-Windows-Sysmon/Operational
+        EventID: 11
+        TargetFilename|contains: '\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\'
+    condition: selection
+falsepositives:
+    - Approved per-user application installers and managed login scripts
+level: medium

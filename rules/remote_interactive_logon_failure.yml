@@ -1,0 +1,20 @@
+title: Failed Remote Interactive Logon
+id: 2d6aa80a-00f8-4b40-b405-79028cae099c
+status: experimental
+description: Flags a failed Windows RemoteInteractive logon for review.
+author: ngduyyy05
+date: 2026-11-24
+tags:
+    - attack.credential-access
+    - attack.t1110.001
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4625
+        LogonType: 10
+    condition: selection
+falsepositives:
+    - Legitimate users entering the wrong password during remote desktop sign-in
+level: low

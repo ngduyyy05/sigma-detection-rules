@@ -1,0 +1,25 @@
+title: Process Requesting Read Access to LSASS
+id: 2c50fe99-3aeb-4d04-808b-746f9d42a50f
+status: experimental
+description: Flags selected Sysmon process-access patterns against LSASS.
+author: ngduyyy05
+date: 2026-11-24
+tags:
+    - attack.credential-access
+    - attack.t1003.001
+logsource:
+    product: windows
+    category: process_access
+detection:
+    selection:
+        Channel: Microsoft-Windows-Sysmon/Operational
+        EventID: 10
+        TargetImage|endswith: '\\lsass.exe'
+        GrantedAccess:
+          - '0x1010'
+          - '0x1410'
+          - '0x1fffff'
+    condition: selection
+falsepositives:
+    - Endpoint security, diagnostics and approved Windows service activity
+level: high

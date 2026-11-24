@@ -1,0 +1,26 @@
+title: PowerShell Process With Encoded Command Argument
+id: facaa37e-61b1-491e-91b7-e72a1a1b9292
+status: experimental
+description: Flags PowerShell process creation with common encoded-command switches.
+author: ngduyyy05
+date: 2026-11-24
+tags:
+    - attack.execution
+    - attack.t1059.001
+logsource:
+    product: windows
+    category: process_creation
+detection:
+    selection:
+        Channel: Microsoft-Windows-Sysmon/Operational
+        EventID: 1
+        Image|endswith:
+          - '\\powershell.exe'
+          - '\\pwsh.exe'
+        CommandLine|contains:
+          - ' -encodedcommand '
+          - ' -enc '
+    condition: selection
+falsepositives:
+    - Administrator tooling with encoded script arguments
+level: medium
