@@ -1,0 +1,53 @@
+name: Validate detections
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements.txt
+      - run: sigma check --fail-on-issues rules
+      - run: |
+          mkdir -p output
+          sigma convert -t lucene -p ecs_windows -o output/elastic-lucene.txt rules
+          sigma convert -t splunk -p splunk_windows -o output/splunk-spl.txt rules
+          test -s output/elastic-lucene.txt
+          test -s output/splunk-spl.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: converted-sigma-queries
+          path: output/*.txt
+          if-no-files-found: error
+
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install Chainsaw
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/WithSecureOpenSource/chainsaw/releases/download/v2.18.0/chainsaw_x86_64-unknown-linux-gnu.tar.gz \
+            -o "$RUNNER_TEMP/chainsaw.tar.gz"
+          mkdir -p "$RUNNER_TEMP/chainsaw"
+          tar -xzf "$RUNNER_TEMP/chainsaw.tar.gz" -C "$RUNNER_TEMP/chainsaw"
+      - name: Verify archived event matches
+        run: |
+          chainsaw=$(find "$RUNNER_TEMP/chainsaw" -type f -name chainsaw -print -quit)
+          mapping=$(find "$RUNNER_TEMP/chainsaw" -type f -name sigma-event-logs-all.yml -print -quit)
+          test -x "$chainsaw"
+          test -f "$mapping"
+          python scripts/replay.py --chainsaw "$chainsaw" --mapping "$mapping"
